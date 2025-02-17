@@ -1,5 +1,6 @@
+#include "pzheader.h"
 #include "tls_server.h"
-#include <iostream>
+
 #include "client_handler.h"
 #include "license_manager.h"
 #include "logger.h"
@@ -125,12 +126,8 @@ void TLSServer::start(LicenseManager& manager, ClientHandler &client_handler) {
             continue;
         }
         LOG_INFO("Client connected with TLS");
-        client_handler.handleClient(ssl);
-        
-        // Gracefully shutdown the SSL connection
-        SSL_shutdown(ssl);
-        SSL_free(ssl);
-        closesocket(clientFd);
+        std::thread clientThread(&ClientHandler::handleClient, &client_handler, ssl);
+        clientThread.detach(); // Detach the thread so it runs independently
     }
 }
 
@@ -139,7 +136,7 @@ bool TLSServer::sendRequest(SSL* ssl,const std::string& request) {
         LOG_ERROR("Error sending request");
         return false;
     }
-    LOG_INFO("sending",request);
+    LOG_DEBUG("Sending: ",request);
     return true;
 }
 
@@ -150,5 +147,6 @@ std::string TLSServer::receiveResponse(SSL* ssl) {
         LOG_ERROR("Error receiving response");
         return "";
     }
+    LOG_DEBUG("Recieved: ", std::string(buffer, bytesRead));
     return std::string(buffer, bytesRead);
 }

@@ -4,7 +4,9 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <string>
-
+#include <thread>
+#include <atomic>
+#include <mutex>
 class TLSClient {
 public:
     TLSClient(const std::string& serverAddress, int serverPort);
@@ -16,6 +18,9 @@ public:
     std::string receiveResponse();
     void closeConnection();
 
+    void startHeartbeat();
+    void stopHeartbeat();
+
 private:
     std::string serverAddress_;
     int serverPort_;
@@ -25,6 +30,10 @@ private:
 
     bool configureTLS();
     bool createSocket();
+
+    std::atomic<bool> running;
+    std::thread heartbeatThread;
+    std::mutex connectionMutex;
 };
 
 #endif // TLS_CLIENT_H

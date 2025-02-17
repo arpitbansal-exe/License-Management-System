@@ -1,14 +1,4 @@
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <ctime>
-#include <iomanip>
-#include <algorithm>
-
-#include <openssl/pem.h>
-#include <openssl/err.h>
-#include <openssl/rsa.h>
-#include <openssl/sha.h>
+#include "pzheader.h"
 
 #include "license_manager.h"
 #include "base64.h"
@@ -18,6 +8,7 @@ using json = nlohmann::json;
 // Load Public Key
 RSA* load_public_key(const std::string& filename) {
     FILE* file = nullptr;
+    LOG_DEBUG("Public Key Filename",filename);
     if (fopen_s(&file, filename.c_str(), "r") != 0 || !file) {
         LOG_ERROR("Cannot open public key file: ", filename);
         return nullptr;
@@ -125,7 +116,7 @@ bool LicenseManager::parseLicenseFile(const std::string& content) {
 bool LicenseManager::verifyLicense(const License& license) const {
     std::string data = hardware_id + license.name + license.license_id + license.expiry + std::to_string(license.quantity);
     if (rsaVerifySignature(data, license.key)) {
-        LOG_INFO("License Signature Verified: ", license.name);
+        LOG_DEBUG("License Signature Verified: ", license.name);
         return true;
     }
     else {
@@ -182,7 +173,7 @@ json LicenseManager::allocateLicense(const std::string& license_name) {
     for (const auto& license : licenses) {
         if (license.name == license_name && activeLicenses[license_name] < license.quantity) {
             activeLicenses[license_name]++;
-            LOG_INFO("License allocated: ", license_name);
+            LOG_DEBUG("License allocated: ", license_name);
 
             // Return license details in JSON
             json licenseJson = {
@@ -212,7 +203,7 @@ json LicenseManager::releaseLicense(const std::string& license_name) {
     std::lock_guard<std::mutex> lock(licenseMutex);
     if (activeLicenses.find(license_name) != activeLicenses.end() && activeLicenses[license_name] > 0) {
         activeLicenses[license_name]--;
-        LOG_INFO("License released: ", license_name);
+        LOG_DEBUG("License released: ", license_name);
         json licenseJson = {
                 {"status", "success"},
                 {"message", "License allocated"},

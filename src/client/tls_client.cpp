@@ -3,6 +3,8 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 #pragma comment(lib, "ws2_32.lib")
 
 TLSClient::TLSClient(const std::string& serverAddress, int serverPort)
@@ -72,12 +74,35 @@ bool TLSClient::connectToServer() {
 }
 
 bool TLSClient::sendRequest(const std::string& request) {
-    if (SSL_write(ssl_, request.c_str(), static_cast<int>(request.size())) <= 0) {
-        std::cerr << "Error sending request\n";
+    if (!ssl_) {
+        std::cerr << "SSL object is not initialized.\n";
         return false;
     }
+
+    int result = SSL_write(ssl_, request.c_str(), static_cast<int>(request.size()));
+    if (result <= 0) {
+        int error = SSL_get_error(ssl_, result);
+        switch (error) {
+        case SSL_ERROR_WANT_WRITE:
+        case SSL_ERROR_WANT_READ:
+            std::cerr << "SSL_write: Operation not completed, retrying.\n";
+            break;
+        case SSL_ERROR_SYSCALL:
+            std::cerr << "SSL_write: I/O error (connection closed or broken pipe).\n";
+            break;
+        case SSL_ERROR_ZERO_RETURN:
+            std::cerr << "SSL_write: Connection closed by server.\n";
+            break;
+        default:
+            std::cerr << "SSL_write: Unknown error (" << error << ").\n";
+            break;
+        }
+        return false;
+    }
+
     return true;
 }
+
 
 std::string TLSClient::receiveResponse() {
     char buffer[4096] = { 0 };
@@ -91,6 +116,8 @@ std::string TLSClient::receiveResponse() {
 
 void TLSClient::closeConnection() {
     if (ssl_) {
+        std::cout << "Closing connection";
+        stopHeartbeat();
         int shutdownResult = SSL_shutdown(ssl_);
         if (shutdownResult == 0) {
             SSL_shutdown(ssl_); // Second call for bidirectional shutdown
@@ -107,4 +134,23 @@ void TLSClient::closeConnection() {
         clientFd_ = INVALID_SOCKET;
     }
 }
-
+void TLSClient::startHeartbeat() {
+    running = true;
+    heartbeatThread = std::thread([this]() {
+        while (running) {
+            std::this_thread::sleep_for(std::chrono::seconds(2)); // Every 5 seconds
+            json request = { { "action", "heartbeat" } };
+            std::string heartbeatMsg = request.dump();
+            {
+                std::lock_guard<std::mutex> lock(connectionMutex);
+                sendRequest(heartbeatMsg);
+            }
+        }
+        });
+}
+void TLSClient::stopHeartbeat() {
+    running = false;
+    if (heartbeatThread.joinable()) {
+        heartbeatThread.join();
+    }
+}

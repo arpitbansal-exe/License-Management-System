@@ -29,10 +29,9 @@ public:
     void updateHeartbeat(const std::string& clientKey);
     void checkHeartbeats();
     void releaseClientLicenses(const std::string& clientKey);
-    void sendHeartbeat();
 private:
     void addClient(std::shared_ptr<Client> clientPtr);
-    void removeClient(Client& client);
+    void removeClient(const std::string& clientKey);
     std::string getClientKey(Client& client);
 
 private:

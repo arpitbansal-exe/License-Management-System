@@ -1,22 +1,16 @@
 // client_handler.cpp
+#include "pzheader.h"
 
 #include "client_handler.h"
-#include <openssl/ssl.h>
-#include <iostream>
-#include <string>
-#include <nlohmann/json.hpp>
 #include "logger.h"
-#include <thread>
-#include <chrono>
+
 using namespace std::chrono;
 using json = nlohmann::json;
 
 ClientHandler::ClientHandler(TLSServer& server, LicenseManager& manager)
     : tls_server(server), licenseManager(manager) {
-    std::thread heartBeatSendThread(&ClientHandler::sendHeartbeat, this);
-    heartBeatSendThread.detach();
-    std::thread heartBeatCheckThread(&ClientHandler::checkHeartbeats, this);
-    heartBeatCheckThread.detach();
+    //std::thread heartBeatCheckThread(&ClientHandler::checkHeartbeats, this);
+    //heartBeatCheckThread.detach();
 }
 
 void ClientHandler::handledActionLicense(Client& client, json request)
@@ -57,35 +51,46 @@ void ClientHandler::handleLicenseRequest(Client& client, std::string licenseName
 
 void ClientHandler::handleLicenseRelease(Client& client, std::string licenseName) {
     json response = licenseManager.releaseLicense(licenseName);
-    // Optionally remove the license from the client if needed.
     tls_server.sendRequest(client.getSSL(), response.dump());
 }
 
 void ClientHandler::handleClient(SSL* ssl) {
     // Create a shared pointer to a Client instance.
     auto clientPtr = std::make_shared<Client>(ssl);
+    std::string clientKey = getClientKey(*clientPtr);
     addClient(clientPtr); // Store the shared pointer in our clients map.
 
-    std::string received_str = tls_server.receiveResponse(ssl);
-    if (received_str.empty()) {
-        std::cerr << "Error reading from client.\n";
-        return;
-    }
-    try {
-        json request = json::parse(received_str);
-        std::string action = request.value("action", "");
-        if (action == "heartbeat_response") {
-            std::string clientKey = getClientKey(*clientPtr);
-            updateHeartbeat(clientKey);
+    while (true) {
+        std::string received_str = tls_server.receiveResponse(ssl);
+        if (received_str.empty()) {
+            std::cerr << "Client disconnected.\n";
+            releaseClientLicenses(clientKey);
+            removeClient(clientKey); // Remove client from map if they disconnect
+            break;
         }
-        // Use the same Client instance (dereferenced shared_ptr) for handling actions.
-        handledActionLicense(*clientPtr, request);
+        try {
+            json request = json::parse(received_str);
+            std::string action = request.value("action", "");
+
+            if (action == "heartbeat") {
+                updateHeartbeat(clientKey);
+            }
+            else {
+                handledActionLicense(*clientPtr, request);
+            }
+        }
+        catch (const std::exception& e) {
+            std::cerr << "JSON parse error: " << e.what() << "\n";
+            tls_server.sendRequest(ssl, R"({"status":"error","message":"Invalid JSON"})");
+        }
     }
-    catch (const std::exception& e) {
-        std::cerr << "JSON parse error: " << e.what() << "\n";
-        tls_server.sendRequest(ssl, "{\"status\":\"error\",\"message\":\"Invalid JSON\"}");
-    }
+    // Gracefully shutdown the SSL connection after all requests are processed
+    SSL_shutdown(ssl);
+    SSL_free(ssl);
+    closesocket(SSL_get_fd(ssl));  // Close the socket
 }
+
+
 
 std::string ClientHandler::getClientKey(Client& client)  {
     return client.getClientIP() + ":" + client.getClientPort();
@@ -97,15 +102,15 @@ void ClientHandler::addClient(std::shared_ptr<Client> clientPtr) {
     std::cout << "Client added: " << key << "\n";
 }
 
-void ClientHandler::removeClient(Client& client) {
-    std::string key = getClientKey(client);
-    auto it = clients.find(key);
+void ClientHandler::removeClient(const std::string& clientKey) {
+    std::lock_guard<std::mutex> lock(clientHandlerMutex); // Thread-safety
+    auto it = clients.find(clientKey);
     if (it != clients.end()) {
         clients.erase(it);
-        std::cout << "Client removed: " << key << "\n";
+        LOG_INFO("Client removed: ", clientKey);
     }
     else {
-        std::cerr << "Client not found: " << key << "\n";
+        LOG_WARNING("Client not found: ", clientKey);
     }
 }
 
@@ -123,9 +128,9 @@ int ClientHandler::getClientCount() {
 }
 
 void ClientHandler::updateHeartbeat(const std::string& clientKey) {
-    std::lock_guard<std::mutex> lock(clientHandlerMutex);
     if (clients.find(clientKey) != clients.end()) {
-        clients[clientKey]->getLastHearbeat() = steady_clock::now();
+        LOG_DEBUG( "Heartbeat updated for", clientKey);
+        clients[clientKey]->setLastHeartBeat(steady_clock::now());
     }
 }
 void ClientHandler::checkHeartbeats() {
@@ -133,7 +138,7 @@ void ClientHandler::checkHeartbeats() {
         std::this_thread::sleep_for(std::chrono::seconds(10)); // Check every 10 seconds
         auto now = std::chrono::steady_clock::now();
         std::lock_guard<std::mutex> lock(clientHandlerMutex);
-        LOG_INFO("checkHeartbeats");
+        LOG_DEBUG("checkHeartbeats");
 
         for (auto it = clients.begin(); it != clients.end();) {
             std::shared_ptr<Client> clientPtr = it->second; // Get shared_ptr<Client>
@@ -172,19 +177,6 @@ void ClientHandler::releaseClientLicenses(const std::string& clientKey) {
         // Access client's licenses from shared_ptr
         for (const auto& license : it->second->getLicenses()) {
             licenseManager.releaseLicense(license.getName());
-        }
-    }
-}
-void ClientHandler::sendHeartbeat() {
-    while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(5)); // Ping every 5 seconds
-        std::lock_guard<std::mutex> lock(clientHandlerMutex);
-        for (auto& [clientKey, clientPtr] : clients) {
-            LOG_INFO("Sending heartbeat to ",clientKey);
-            if (clientPtr && clientPtr->isActive()) {
-                const std::string pingMessage = R"({"action": "heartbeat"})";
-                tls_server.sendRequest(clientPtr->getSSL(), pingMessage);
-            }
         }
     }
 }

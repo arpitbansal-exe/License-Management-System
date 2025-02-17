@@ -1,8 +1,4 @@
-#include <string>
-#include <vector>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <ws2tcpip.h>
+#include "pzheader.h"
 
 #include "license.h" 
 #include "client.h"
@@ -75,6 +71,9 @@ SSL* Client::getSSL() {
 }
 std::chrono::steady_clock::time_point Client::getLastHearbeat() {
     return lastHeartbeat;
+}
+void Client::setLastHeartBeat(const std::chrono::steady_clock::time_point& time) {
+    lastHeartbeat = time;
 }
 bool Client::isActive() const {
     using namespace std::chrono;

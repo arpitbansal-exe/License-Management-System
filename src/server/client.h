@@ -30,7 +30,7 @@ public:
 
     std::vector<License> getLicenses() const;
     std::chrono::steady_clock::time_point getLastHearbeat();
-
+    void Client::setLastHeartBeat(const std::chrono::steady_clock::time_point& time);
     Client(const Client& other)
         : _ssl(other._ssl),
         client_name(other.client_name),

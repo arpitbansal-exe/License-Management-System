@@ -22,10 +22,20 @@ set(SOURCES
     client.h
     client.cpp
 
+    UI.h
+    UI.cpp
+
+    SERVER.h
+    SERVER.cpp
+
     render.cpp
 	render.h
+
 	ui_windows.h
 	ui_windows.cpp
+
+    pzheader.h
+    pzheader.cpp
     ${CMAKE_SOURCE_DIR}/src/common/base64.h
     ${CMAKE_SOURCE_DIR}/src/common/base64.cpp
 )
@@ -33,6 +43,9 @@ set(SOURCES
 # Create Executable
 add_executable(license_server ${SOURCES})
 message(STATUS "⚙️ License Server: Adding Executable!")
+
+message(STATUS "⚙️ License Server: Adding Precompiled Headers!")
+target_precompile_headers(license_server PRIVATE pzheader.h)
 
 # Include Directories
 target_include_directories(license_server PRIVATE 

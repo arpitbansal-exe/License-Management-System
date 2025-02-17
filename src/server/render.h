@@ -6,6 +6,6 @@
 
 #include "license_manager.h"
 #include "client_handler.h"
-void setupUI(GLFWwindow* window);
-void renderUI(LicenseManager& manager, ClientHandler& clientHandler);
-void cleanupUI();
+namespace SERVER_UI {
+	void renderUI();
+}
