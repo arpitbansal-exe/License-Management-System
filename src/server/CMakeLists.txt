@@ -4,38 +4,23 @@ message(STATUS "⚙️ License Server: Building!")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+file(GLOB UI_SOURCES
+    "ui/*.cpp"
+    "ui/*.h"
+)
+
+# Gather all files from server directory
+file(GLOB SERVER_SOURCES
+    "SERVER/*.cpp"
+    "server/*.h"
+)
 # Source Files 
 set(SOURCES 
     main.cpp
-    config.h
-    license_manager.h
-    license_manager.cpp
-
-    tls_server.h
-    tls_server.cpp
-
-    client_handler.h
-    client_handler.cpp
-
-    license.h
-    
-    client.h
-    client.cpp
-
-    UI.h
-    UI.cpp
-
-    SERVER.h
-    SERVER.cpp
-
-    render.cpp
-	render.h
-
-	ui_windows.h
-	ui_windows.cpp
-
     pzheader.h
     pzheader.cpp
+	${UI_SOURCES}
+    ${SERVER_SOURCES}
     ${CMAKE_SOURCE_DIR}/src/common/base64.h
     ${CMAKE_SOURCE_DIR}/src/common/base64.cpp
 )
@@ -70,11 +55,21 @@ target_link_libraries(license_server
 
 # Visual Studio Configuration
 message(STATUS "⚙️ License license: Configuring VS setting! ")
+source_group("Common" FILES 
+    pzheader.h
+    pzheader.cpp
+    ${CMAKE_SOURCE_DIR}/src/common/base64.h
+    ${CMAKE_SOURCE_DIR}/src/common/base64.cpp
+)
+
+source_group("ui" FILES ${UI_SOURCES})
+source_group("server" FILES ${SERVER_SOURCES})
 set_target_properties(license_server PROPERTIES
     OUTPUT_NAME "LicenseServer"
     PROJECT_LABEL "License Server"
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
 )
+
 message(STATUS "⚙️ License Server: Done!")
 
 

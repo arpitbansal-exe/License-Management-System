@@ -1,6 +1,6 @@
-﻿#include "pzheader.h"
-#include "render.h"
-#include "ui_windows.h"
+﻿#include "pzheader.cpp"
+#include "ui/render.h"
+#include "ui/ui_windows.h"
 
 namespace SERVER_UI {
 

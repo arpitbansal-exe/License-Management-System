@@ -4,8 +4,8 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 
-#include "license_manager.h"
-#include "client_handler.h"
+#include "server/license_manager.h"
+#include "server/client_handler.h"
 namespace SERVER_UI {
 	void renderUI();
 }

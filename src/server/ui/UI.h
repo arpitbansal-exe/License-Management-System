@@ -1,8 +1,8 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
-#include "license_manager.h"
-#include "client_handler.h"
+#include "server/license_manager.h"
+#include "server/client_handler.h"
 
 // UI Window dimensions
 constexpr int WINDOW_WIDTH = 1280;

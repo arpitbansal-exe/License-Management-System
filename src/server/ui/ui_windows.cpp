@@ -1,14 +1,14 @@
-#include "pzheader.h"
-#include "ui_windows.h"
+#include "pzheader.cpp"
+#include "ui/ui_windows.h"
 #include "imgui.h"
-#include "license.h"
-#include "config.h"
-#include "client.h"
+#include "server/license.h"
+#include "server/config.h"
+#include "server/client.h"
 #include "logger.h"
-#include "server.h"
+#include "server/server.h"
 
 namespace SERVER_UI {
-    void ServerInfoWindow(LicenseManager& manager, ClientHandler& clientHandler) {
+    void ServerInfoWindow(SERVER::LicenseManager& manager, SERVER::ClientHandler& clientHandler) {
         if (ImGui::Begin("Server Info", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
             // Style for labels
 
@@ -87,7 +87,7 @@ namespace SERVER_UI {
         ImGui::End();
     }
 
-    void showALL_LicensesWindow(LicenseManager& manager) {
+    void showALL_LicensesWindow(SERVER::LicenseManager& manager) {
         if (ImGui::Begin("ALL Licenses")) {
             ImGui::Text("Currently Active Licenses:");
             if (ImGui::BeginTable("LicensesTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Sortable)) {
@@ -121,9 +121,9 @@ namespace SERVER_UI {
         }
         ImGui::End();
     }
-    void showClients(ClientHandler& clientHandler) {
+    void showClients(SERVER::ClientHandler& clientHandler) {
         // Make result static to persist across frames.
-        static std::vector<std::pair<std::shared_ptr<Client>, std::vector<License>>> result;
+        static std::vector<std::pair<std::shared_ptr<SERVER::Client>, std::vector<License>>> result;
         static size_t totalLicenses = 0;
 
         // Static flag to track if a refresh is needed.
@@ -228,7 +228,7 @@ namespace SERVER_UI {
         ImGui::End();
     }
 
-    void showLicenseOverview(LicenseManager& licenseManager) {
+    void showLicenseOverview(SERVER::LicenseManager& licenseManager) {
         if (ImGui::Begin("License Overview")) {
             // Create a table with 3 columns: License Name, Total Available, and Current Usage.
             if (ImGui::BeginTable("LicenseTable", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable)) {
