@@ -61,7 +61,7 @@ bool TLSClient::connectToServer() {
     }
 
     ssl_ = SSL_new(sslCtx_);
-    SSL_set_fd(ssl_, clientFd_);
+    SSL_set_fd(ssl_, (int)clientFd_);
 
     if (SSL_connect(ssl_) <= 0) {
         std::cerr << "TLS handshake failed\n";
@@ -117,7 +117,6 @@ std::string TLSClient::receiveResponse() {
 void TLSClient::closeConnection() {
     if (ssl_) {
         std::cout << "Closing connection";
-        stopHeartbeat();
         int shutdownResult = SSL_shutdown(ssl_);
         if (shutdownResult == 0) {
             SSL_shutdown(ssl_); // Second call for bidirectional shutdown
@@ -132,25 +131,5 @@ void TLSClient::closeConnection() {
     if (clientFd_ != INVALID_SOCKET) {
         closesocket(clientFd_);
         clientFd_ = INVALID_SOCKET;
-    }
-}
-void TLSClient::startHeartbeat() {
-    running = true;
-    heartbeatThread = std::thread([this]() {
-        while (running) {
-            std::this_thread::sleep_for(std::chrono::seconds(2)); // Every 5 seconds
-            json request = { { "action", "heartbeat" } };
-            std::string heartbeatMsg = request.dump();
-            {
-                std::lock_guard<std::mutex> lock(connectionMutex);
-                sendRequest(heartbeatMsg);
-            }
-        }
-        });
-}
-void TLSClient::stopHeartbeat() {
-    running = false;
-    if (heartbeatThread.joinable()) {
-        heartbeatThread.join();
     }
 }

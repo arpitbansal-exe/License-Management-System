@@ -74,7 +74,7 @@ namespace SERVER{
     std::chrono::steady_clock::time_point SERVER::Client::getLastHearbeat() const {
         return lastHeartbeat;
     }
-    void Client::setLastHeartBeat(const std::chrono::steady_clock::time_point & time) {
+    void Client::setLastHeartBeatt(const std::chrono::steady_clock::time_point & time) {
         lastHeartbeat = time;
     }
     bool Client::isActive() const {

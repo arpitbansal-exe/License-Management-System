@@ -23,7 +23,7 @@ namespace SERVER {
         bool isActive() const;
 
         std::chrono::steady_clock::time_point getLastHearbeat() const;
-        void Client::setLastHeartBeat(const std::chrono::steady_clock::time_point& time);
+        void setLastHeartBeatt(const std::chrono::steady_clock::time_point& time);
         Client(const Client& other)
             : _ssl(other._ssl),
             client_name(other.client_name),

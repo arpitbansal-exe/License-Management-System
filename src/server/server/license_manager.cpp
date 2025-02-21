@@ -180,6 +180,7 @@ namespace SERVER {
                 json licenseJson = {
                     {"status", "success"},
                     {"message", "License allocated"},
+                    {"hardware_id",getHardwareID()},
                     {"license", {
                         {"name", license.name},
                         {"license_id", license.license_id},

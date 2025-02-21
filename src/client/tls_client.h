@@ -18,22 +18,16 @@ public:
     std::string receiveResponse();
     void closeConnection();
 
-    void startHeartbeat();
-    void stopHeartbeat();
 
 private:
     std::string serverAddress_;
     int serverPort_;
     SSL_CTX* sslCtx_;
     SSL* ssl_;
-    int clientFd_;
+    SOCKET clientFd_;
 
     bool configureTLS();
     bool createSocket();
-
-    std::atomic<bool> running;
-    std::thread heartbeatThread;
-    std::mutex connectionMutex;
 };
 
 #endif // TLS_CLIENT_H

@@ -40,7 +40,6 @@ target_include_directories(license_server PRIVATE
     ${GLFW_ROOT_DIR}/include
     ${IMGUI_ROOT_DIR}
     )
-
 # Link with OpenSSL (from Parent)
 message(STATUS "⚙️ License license: Linking OpenSSL! ")
 target_link_libraries(license_server

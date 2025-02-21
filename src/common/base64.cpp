@@ -20,7 +20,7 @@ std::string base64_encode(const unsigned char* buffer, size_t length) {
     bio = BIO_new(BIO_s_mem());
     bio = BIO_push(b64, bio);
 
-    BIO_write(bio, buffer, length);
+    BIO_write(bio, buffer, (int)length);
     BIO_flush(bio);
     BIO_get_mem_ptr(bio, &buffer_ptr);
 
@@ -30,13 +30,13 @@ std::string base64_encode(const unsigned char* buffer, size_t length) {
     return base64_data;
 }
 std::string base64Decode(const std::string& input) {
-    BIO* bio = BIO_new_mem_buf(input.data(), input.size());
+    BIO* bio = BIO_new_mem_buf(input.data(), (int)input.size());
     BIO* b64 = BIO_new(BIO_f_base64());
     bio = BIO_push(b64, bio);
     BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
 
     std::vector<char> buffer(input.size());
-    int length = BIO_read(bio, buffer.data(), buffer.size());
+    int length = BIO_read(bio, buffer.data(), (int)buffer.size());
     BIO_free_all(bio);
 
     return std::string(buffer.data(), length);

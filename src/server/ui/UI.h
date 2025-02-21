@@ -14,5 +14,3 @@ namespace SERVER_UI {
     void runUI(GLFWwindow* window);
     void cleanupUI();
 }
-
-

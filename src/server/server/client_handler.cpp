@@ -36,6 +36,7 @@ namespace SERVER {
         if (response["status"] == "success") {
             // Construct a License object from the JSON response.
             License allocatedLicense(
+                
                 response["license"]["name"],
                 response["license"]["license_id"],
                 response["license"]["expiry"],
@@ -130,7 +131,7 @@ namespace SERVER {
     void ClientHandler::updateHeartbeat(const std::string& clientKey) {
         if (clients.find(clientKey) != clients.end()) {
             LOG_DEBUG("Heartbeat updated for", clientKey);
-            clients[clientKey]->setLastHeartBeat(steady_clock::now());
+            clients[clientKey]->setLastHeartBeatt(steady_clock::now());
         }
     }
     void ClientHandler::checkHeartbeats() {

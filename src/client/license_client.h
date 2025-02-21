@@ -1,19 +1,19 @@
-#ifndef LICENSE_CLIENT_H
-#define LICENSE_CLIENT_H
-
-#include "tls_client.h"
+#pragma once
 #include <string>
+#include <memory>
+#include "license_client_exception.h"
+// Forward declaration (hides implementation details)
+class TLSClient;
 
 class LicenseClient {
 public:
-    LicenseClient(TLSClient& client);
-    std::string get_license(const std::string& license_name);
+    LicenseClient(const std::string& serverAddress, int serverPort);
+    ~LicenseClient();
 
-    bool request_license(const std::string& license_name);
-    std::string recieve_license  (const std::string& license_name);
+    bool get_license(const std::string& license_name);
     bool release_license(const std::string& license_name);
-private:
-    TLSClient& tlsClient;
-};
 
-#endif // LICENSE_CLIENT_H
+    bool verifyLicense();
+private:
+    std::unique_ptr<TLSClient> tlsClient;
+};

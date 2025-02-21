@@ -267,7 +267,7 @@ namespace SERVER_UI {
         SERVER_UI::ServerInfoWindow(*SERVER::manager, *SERVER::clientHandler);
         SERVER_UI::showClients(*SERVER::clientHandler);
         SERVER_UI::showLicenseOverview(*SERVER::manager);
-    
+
     }
 
     void StartupWindow() {
@@ -286,9 +286,9 @@ namespace SERVER_UI {
                 if (SERVER::CreateServer()) {
                     SERVER::isServerRunning = true;  // Mark server as initialized
                     ShowMainWindows();
-                    
+
                 }
-                    
+
             }
             ImGui::End();
         }
@@ -298,4 +298,3 @@ namespace SERVER_UI {
         }
     }
 }
-
